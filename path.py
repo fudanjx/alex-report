@@ -1,0 +1,12 @@
+# Define io paths
+path_inflight_data = "D:/Dropbox/HIM/Raw_Download/Inflight/"
+path_discharge_data = "D:/Dropbox/HIM/Raw_Download/Discharge/"
+path_admission_data = "D:/Dropbox/HIM/Raw_Download/Admission/"
+path_procedure_data = "D:/Dropbox/HIM/Raw_Download/Procedure/"
+path_UCC_data = "D:/Dropbox/HIM/Raw_Download/UCC/"
+path_SOC_data = "D:/Dropbox/HIM/Raw_Download/SOC/"
+path_Email_data = "D:/Dropbox/HIM/Raw_Download/Email/"
+path = "D:/Dropbox/HIM/Raw_Download/Other_reports/"
+path_wip_output = "D:/Dropbox/HIM/WIP/"
+path_report_output = "D:/Dropbox/HIM/Report/"
+path_lookup = "D:/Dropbox/HIM/lookup/"
