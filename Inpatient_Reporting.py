@@ -106,10 +106,17 @@ df_inflight_final = prep.mapping_Trt_Cat(df_inflight_final, PT.path_lookup)
 df_inflight_final['Class_with_icu_iso'] = df_inflight_final['Class_abc']
 df_inflight_final['Class_with_icu_iso'] = df_inflight_final.apply(
     lambda x: prep.pt_class_with_icu_iso(x['Class_abc'], x['Accom_Category'], x['Trt_Cat']), axis=1)
+df_inflight_final['Class_icu_iso_MOH'] = df_inflight_final['Class_abc_MOH']
+df_inflight_final['Class_icu_iso_MOH'] = df_inflight_final.apply(
+    lambda x: prep.pt_class_with_icu_iso(x['Class_abc_MOH'], x['Accom_Category'], x['Trt_Cat']), axis=1)
+
 df_inflight_final = df_inflight_final[(df_inflight_final['Ward'] != 'LWEDTU') & (df_inflight_final['Ward'] != 'LWASW')]
 print("After merge & remove EDTU/ASW: ", df_inflight_final.shape)
 df_inflight_final.to_csv(PT.path_wip_output + 'final_inflight.csv', index=0)
 print('Patient days DataFrame is successfully prepared ')
+
+# use for F10
+df_inflight_lastMonth_w_dc = df_inflight_final[df_inflight_final['Inflight_Date'] >= first_lastMonth]
 
 report_df_pt_days_acuity = pd.pivot_table(df_inflight_final, values='cnt', index=['Acuity', 'Dept_Name'],
                                           columns=['Year', 'Month'],
@@ -218,6 +225,11 @@ report_finance_pt_days2 = pd.pivot_table(df_inflight_final, values='cnt',
                                          columns=['Year', 'Month', 'Month_abbr'],
                                          aggfunc=np.sum, margins=True, margins_name='Total')
 
+report_F10_pt_days = pd.pivot_table(df_inflight_lastMonth_w_dc, values='cnt',
+                                    index=['Moh_Clinical_Dept'],
+                                    columns=['Year', 'Month', 'Resident_Type', 'Class_icu_iso_MOH'],
+                                    aggfunc=np.sum, margins=True, margins_name='Total')
+
 report_finance_pt_days_subspec = pd.pivot_table(df_inflight_final, values='cnt',
                                                 index=['Program', 'Dept_Name'],
                                                 columns=['Year', 'Month', 'Month_abbr'],
@@ -251,10 +263,13 @@ df_bis_for_report = df_bis_for_report.loc[df_bis_for_report['rep_index'] == 0]
 df_bis_for_report['pd_date'] = pd.to_datetime(df_bis_for_report[['Year', 'Month', 'Day']])
 df_bis_for_report = df_bis_for_report[df_bis_for_report['pd_date'] >= first_lastMonth]
 df_bis_for_report = df_bis_for_report[df_bis_for_report['pd_date'] < first_this_month]
+df_nrs_ou = pd.read_excel(PT.path_lookup + 'Class.xlsx', sheet_name="Nrs_OU",
+                          index_col='Ward')
+df_bis_for_report = pd.merge(df_bis_for_report, df_nrs_ou, how='left', on='Ward')
 report_df_bis_by_class = pd.pivot_table(df_bis_for_report, values='BIS', index=['Class'],
                                         columns=['Year', 'Month', 'Day'],
                                         aggfunc=np.sum, margins=True, margins_name='Total')
-report_df_bis_by_ward = pd.pivot_table(df_bis_for_report, values='BIS', index=['Ward'],
+report_df_bis_by_ward = pd.pivot_table(df_bis_for_report, values='BIS', index=['Nrs_OU'],
                                        columns=['Year', 'Month', 'Day'],
                                        aggfunc=np.sum, margins=True, margins_name='Total')
 
@@ -280,6 +295,7 @@ report_df_disch_w_24h.to_excel(writer, sheet_name='disch_w_24h')
 report_df_F09_adm.to_excel(writer, sheet_name='MOH_F09_Adm')
 report_df_F09_disch.to_excel(writer, sheet_name='MOH_F09_Disch')
 report_df_F09_disch_death.to_excel(writer, sheet_name='MOH_F09_death')
+report_F10_pt_days.to_excel(writer, sheet_name='MOH_F10_ptdays')
 report_df_lodger_adm.to_excel(writer, sheet_name='MOH_F03_Lodger')
 report_df_lodger_pt_days.to_excel(writer, sheet_name='MOH_F03a_Lodger')
 report_finance_discharge1.to_excel(writer, sheet_name='Fin_disch1')
@@ -295,4 +311,4 @@ report_ALOS_by_subspec = report_finance_pt_days_subspec / report_finance_dischar
 report_ALOS_by_subspec.to_excel(writer, sheet_name='ALOS_by_dept', float_format="%0.2f")
 
 writer.save()
-print("Report successfully Generated")
+print("Reports successfully Generated")

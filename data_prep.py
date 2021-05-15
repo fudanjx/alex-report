@@ -90,9 +90,9 @@ def mapping_Trt_Cat(df_to_merge, path_lookup):
 
     if any('Class' == string for string in headers):
         df_pt_cls_abc = pd.read_excel(path_lookup + 'Class.xlsx', sheet_name="pt_class_abc")
-        df_pt_resident = pd.read_excel(path_lookup + 'Class.xlsx', sheet_name="Resident")
+        # df_pt_resident = pd.read_excel(path_lookup + 'Class.xlsx', sheet_name="Resident")
         df_to_merge = pd.merge(df_to_merge, df_pt_cls_abc, how='left', on='Class')
-        df_to_merge = pd.merge(df_to_merge, df_pt_resident, how='left', on='Class')
+        # df_to_merge = pd.merge(df_to_merge, df_pt_resident, how='left', on='Class')
 
     if any('Dept_OU' == string for string in headers):
         df_pt_cls_abc = pd.read_excel(path_lookup + 'Class.xlsx', sheet_name="Subspec")
