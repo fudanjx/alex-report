@@ -243,12 +243,12 @@ report_finance_discharge_subspec = pd.pivot_table(df_dc, values='cnt',
                                                   columns=['Year', 'Month'],
                                                   aggfunc=np.sum, margins=True, margins_name='Total')
 
-
 # reporting section for BIS
 df_bis_for_report = pd.read_csv(PT.path_wip_output + 'BMU_email.csv')
 # always extract the first import (based on rep_index)
 df_bis_for_report = df_bis_for_report.loc[df_bis_for_report['rep_index'] == 0]
-df_bis_for_report['pd_date'] = pd.to_datetime(df_bis_for_report.Date, format='%Y-%m-%d')
+# take note the double square bracket below
+df_bis_for_report['pd_date'] = pd.to_datetime(df_bis_for_report[['Year', 'Month', 'Day']])
 df_bis_for_report = df_bis_for_report[df_bis_for_report['pd_date'] >= first_lastMonth]
 df_bis_for_report = df_bis_for_report[df_bis_for_report['pd_date'] < first_this_month]
 report_df_bis_by_class = pd.pivot_table(df_bis_for_report, values='BIS', index=['Class'],
@@ -266,7 +266,7 @@ report_df_ALOS_by_ward = report_df_pt_days_by_ward / report_df_disch_by_ward
 report_df_adm_by_ward.to_excel(writer, sheet_name='adm_by_ward')
 report_df_disch_by_ward.to_excel(writer, sheet_name='disch_by_ward')
 report_df_pt_days_by_ward.to_excel(writer, sheet_name='pt_days_by_ward')
-report_df_ALOS_by_ward.to_excel(writer, sheet_name='ALOS_by_ward', float_format = "%0.2f")
+report_df_ALOS_by_ward.to_excel(writer, sheet_name='ALOS_by_ward', float_format="%0.2f")
 
 report_df_pt_days_acuity.to_excel(writer, sheet_name='pt_days_by_acuity')
 
@@ -275,7 +275,6 @@ report_df_daily_pt_days.to_excel(writer, sheet_name='daily_pt_days')
 report_df_disch_by_adm_type.to_excel(writer, sheet_name='disch_by_adm_type')
 report_df_bis_by_ward.to_excel(writer, sheet_name='Bed_days_by_ward')
 report_df_bis_by_class.to_excel(writer, sheet_name='BIS_by_class')
-
 
 report_df_disch_w_24h.to_excel(writer, sheet_name='disch_w_24h')
 report_df_F09_adm.to_excel(writer, sheet_name='MOH_F09_Adm')
@@ -291,9 +290,9 @@ report_finance_pt_days2.to_excel(writer, sheet_name='Fin_pt_days2')
 report_finance_pt_days_subspec.to_excel(writer, sheet_name='Fin_pt_days_dept')
 
 report_ALOS_by_subspec_cls = report_finance_pt_days1 / report_finance_discharge1
-report_ALOS_by_subspec_cls.to_excel(writer, sheet_name='ALOS_by_dept&cls', float_format = "%0.2f")
+report_ALOS_by_subspec_cls.to_excel(writer, sheet_name='ALOS_by_dept&cls', float_format="%0.2f")
 report_ALOS_by_subspec = report_finance_pt_days_subspec / report_finance_discharge_subspec
-report_ALOS_by_subspec.to_excel(writer, sheet_name='ALOS_by_dept', float_format = "%0.2f")
+report_ALOS_by_subspec.to_excel(writer, sheet_name='ALOS_by_dept', float_format="%0.2f")
 
 writer.save()
 print("Report successfully Generated")
