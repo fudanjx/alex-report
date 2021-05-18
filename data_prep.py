@@ -174,3 +174,33 @@ def death_indicator(discharge_Type_text):
         return 1
     else:
         return 0
+
+
+def fin_ref_hosp_inpt(refer_hosp):
+    if 'Intra-Dept referral A&E' in refer_hosp:
+        return 'Intra-A&E'
+    elif 'Intra-Dept referral SOC' in refer_hosp:
+        return 'Intra-SOC'
+    elif 'National University Hospital' in refer_hosp:
+        return 'NUH'
+    elif 'Hospital' in refer_hosp:
+        return 'Other inter-Hosp trf'
+    else:
+        return 'Others'
+
+
+def fin_ref_hosp_soc(ref_type, ref_hosp):
+    if 'Polyclinics' in ref_type:
+        return 'Polyclinics'
+    elif 'Poly' in ref_type:
+        return 'Polyclinics'
+    elif 'National University Hospital' in ref_hosp:
+        return 'NUH'
+    elif 'GP' in ref_type:
+        return 'GP'
+    elif 'CommHlth Assist' in ref_type:
+        return 'GP'
+    elif 'Pte Practitione' in ref_type:
+        return 'GP'
+    else:
+        return 'Others'

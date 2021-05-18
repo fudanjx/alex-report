@@ -47,6 +47,7 @@ df_adm = df_adm.loc[df_adm['Adm_Type'].str.contains('EM|SD|DI|EL|SO|TA', regex=T
 df_dc.rename(columns={"Disch_Class": 'Class'}, inplace=True)
 df_dc = prep.mapping_Trt_Cat(df_dc, PT.path_lookup)
 df_dc.rename(columns={"Class": 'Disch_Class'}, inplace=True)
+df_dc['ref_type_fin'] = df_dc.apply(lambda x: prep.fin_ref_hosp_inpt(x['Referring_Hospital_Text']), axis=1)
 
 df_adm.rename(columns={"Adm_Cls": 'Class'}, inplace=True)
 df_adm = prep.mapping_Trt_Cat(df_adm, PT.path_lookup)
@@ -217,12 +218,12 @@ report_df_daily_disch = pd.pivot_table(df_dc_lastMonth, values='cnt', index=['Nr
                                        aggfunc=np.sum, margins=True, margins_name='Total')
 
 report_finance_pt_days1 = pd.pivot_table(df_inflight_final, values='cnt', index=['Program', 'Dept_Name', 'Class_abc'],
-                                         columns=['Year', 'Month', 'Month_abbr'],
+                                         columns=['Year', 'Month'],
                                          aggfunc=np.sum, margins=True, margins_name='Total')
 
 report_finance_pt_days2 = pd.pivot_table(df_inflight_final, values='cnt',
                                          index=['Program', 'Dept_Name', 'Class_with_icu_iso'],
-                                         columns=['Year', 'Month', 'Month_abbr'],
+                                         columns=['Year', 'Month'],
                                          aggfunc=np.sum, margins=True, margins_name='Total')
 
 report_F10_pt_days = pd.pivot_table(df_inflight_lastMonth_w_dc, values='cnt',
@@ -232,12 +233,12 @@ report_F10_pt_days = pd.pivot_table(df_inflight_lastMonth_w_dc, values='cnt',
 
 report_finance_pt_days_subspec = pd.pivot_table(df_inflight_final, values='cnt',
                                                 index=['Program', 'Dept_Name'],
-                                                columns=['Year', 'Month', 'Month_abbr'],
+                                                columns=['Year', 'Month'],
                                                 aggfunc=np.sum, margins=True, margins_name='Total')
 
 report_df_pt_days_by_ward = pd.pivot_table(df_inflight_final, values='cnt',
                                            index=['Ward'],
-                                           columns=['Year', 'Month', 'Month_abbr'],
+                                           columns=['Year', 'Month'],
                                            aggfunc=np.sum, margins=True, margins_name='Total')
 
 report_finance_discharge1 = pd.pivot_table(df_dc, values='cnt',
@@ -254,6 +255,11 @@ report_finance_discharge_subspec = pd.pivot_table(df_dc, values='cnt',
                                                   index=['Program', 'Dept_Name'],
                                                   columns=['Year', 'Month'],
                                                   aggfunc=np.sum, margins=True, margins_name='Total')
+
+report_finance_disch_ref_type = pd.pivot_table(df_dc, values='cnt',
+                                               index=['Program', 'Dept_Name', 'ref_type_fin'],
+                                               columns=['Year', 'Month'],
+                                               aggfunc=np.sum, margins=True, margins_name='Total')
 
 # reporting section for BIS
 df_bis_for_report = pd.read_csv(PT.path_wip_output + 'BMU_email.csv')
@@ -301,6 +307,7 @@ report_df_lodger_pt_days.to_excel(writer, sheet_name='MOH_F03a_Lodger')
 report_finance_discharge1.to_excel(writer, sheet_name='Fin_disch1')
 report_finance_discharge2.to_excel(writer, sheet_name='Fin_disch2')
 report_finance_discharge_subspec.to_excel(writer, sheet_name='Fin_disch_dept')
+report_finance_disch_ref_type.to_excel(writer, sheet_name='Fin_disch_ref_type')
 report_finance_pt_days1.to_excel(writer, sheet_name='Fin_pt_days1')
 report_finance_pt_days2.to_excel(writer, sheet_name='Fin_pt_days2')
 report_finance_pt_days_subspec.to_excel(writer, sheet_name='Fin_pt_days_dept')
