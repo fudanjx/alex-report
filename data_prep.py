@@ -141,10 +141,13 @@ def replace_with_current_ward(adm_ward, current_ward):
     if left_str == 'LW':
         if adm_ward == 'LWEDTU':
             adm_ward = current_ward
+            return adm_ward
         if adm_ward == 'LWASW':
             adm_ward = current_ward
+            return adm_ward
         if adm_ward == 'LWDSW':
             adm_ward = current_ward
+            return adm_ward
     else:
         adm_ward = current_ward
     return adm_ward

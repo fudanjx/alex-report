@@ -34,6 +34,7 @@ df_inflight["Month"] = df_inflight['Inflight_Date'].dt.month
 df_adm["Year"] = df_adm['Adm_Date'].dt.year
 df_adm["Month"] = df_adm['Adm_Date'].dt.month
 
+print("Load all inpatient database into the memory .... done")
 # Generate subset df for last year statistics
 df_inflight = df_inflight[df_inflight['Inflight_Date'] >= first_lastyear]
 df_dc = df_dc[df_dc['Disch_Date'] >= first_lastyear]
@@ -41,7 +42,26 @@ df_adm = df_adm[df_adm['Adm_Date'] >= first_lastyear]
 
 # Filter for inpatient only for adm and discharge report
 df_dc = df_dc.loc[df_dc['Adm_Type'].str.contains('EM|SD|DI|EL|SO|TA', regex=True)]
+df_dc = df_dc.loc[df_dc['Disch_Status'] != 'P']
 df_adm = df_adm.loc[df_adm['Adm_Type'].str.contains('EM|SD|DI|EL|SO|TA', regex=True)]
+df_adm = df_adm.loc[df_adm['Adm_Status'] != 'P']
+
+print("Filter for last 12 months inpatient data .... done")
+
+# customize for ChweeHuat's report
+df_adm_lastmonth_ChweeHuat = df_adm[df_adm['Adm_Date'] >= first_lastMonth]
+df_adm_lastmonth_ChweeHuat = df_adm_lastmonth_ChweeHuat.loc[
+    df_adm_lastmonth_ChweeHuat['Adm_Type'].str.contains('EM|SD|DI|EL', regex=True)]
+df_adm_lastmonth_ChweeHuat = df_adm_lastmonth_ChweeHuat.loc[
+    df_adm_lastmonth_ChweeHuat['Disch_Nrs_OU'].str.contains('LWASW|LWDSW|LWEDTU', regex=True) == False]
+report_df_ChweeHuat = df_adm_lastmonth_ChweeHuat.loc[:, {
+                                                            'Case_No', 'C', 'Adm_Date', 'Adm_Time', 'Adm_Cls',
+                                                            'Adm_Nrs_OU', 'Disch_Date', 'Disch_Time', 'Current_Ward'}]
+report_df_ChweeHuat = report_df_ChweeHuat.reindex(columns=[
+    'Case_No', 'C', 'Adm_Date', 'Adm_Time', 'Adm_Cls', 'Adm_Nrs_OU', 'Disch_Date', 'Disch_Time', 'Current_Ward'])
+report_df_ChweeHuat.to_csv(PT.path_report_output + 'ChweeHuat_monthly_adm_rpt.csv', index=0)
+
+print("Cheehuat's case level admission report generation .... done")
 
 # prep with the necessary mapping. Inflight will map the class after merge of dataframe
 df_dc.rename(columns={"Disch_Class": 'Class'}, inplace=True)
@@ -62,13 +82,14 @@ df_dc_lastMonth = df_dc[df_dc['Disch_Date'] >= first_lastMonth]
 df_dc_lastMonth["Month"] = df_dc_lastMonth['Month'].apply(lambda x: calendar.month_abbr[x])
 df_dc_lastMonth["Date"] = df_dc_lastMonth['Disch_Date'].dt.day
 
+print("Creating the subset dataframe for last month inpatient data .... done")
+
 # find out the same day discharge
 mask = df_adm['Adm_Date'] == df_adm['Disch_Date']
 same_day_dc_df = df_adm.loc[mask]
 
 # Section 1: Generate monthly patient days using inflight + same day disch data (based on admission report)
 # extract same columns to merge into inflight
-print('Start to prepare inpatient days statistics: ')
 dc_to_inflight = pd.DataFrame()
 dc_to_inflight['Pat_Name'] = same_day_dc_df['Pat_Name']
 dc_to_inflight['Ward'] = same_day_dc_df['Disch_Nrs_OU']
@@ -91,7 +112,6 @@ dc_to_inflight['Attend_Phy'] = same_day_dc_df['Disch_Phy']
 dc_to_inflight['Accom_Category'] = same_day_dc_df['Adm_Acmd_Cat']
 
 print("inflight: ", df_inflight.shape)
-
 dc_to_inflight.to_csv(PT.path_wip_output + 'dc_sameday_inpatient.csv', index=0)
 print("dc_same_day: ", dc_to_inflight.shape)
 
@@ -101,6 +121,7 @@ frames = [dc_to_inflight, df_inflight]
 df_inflight_final = pd.concat(frames)
 
 print("final inflight: ", df_inflight_final.shape)
+
 
 df_inflight_final["Month_abbr"] = df_inflight_final['Inflight_Date'].dt.month.apply(lambda x: calendar.month_abbr[x])
 df_inflight_final = prep.mapping_Trt_Cat(df_inflight_final, PT.path_lookup)
@@ -112,9 +133,10 @@ df_inflight_final['Class_icu_iso_MOH'] = df_inflight_final.apply(
     lambda x: prep.pt_class_with_icu_iso(x['Class_abc_MOH'], x['Accom_Category'], x['Trt_Cat']), axis=1)
 
 df_inflight_final = df_inflight_final[(df_inflight_final['Ward'] != 'LWEDTU') & (df_inflight_final['Ward'] != 'LWASW')]
-print("After merge & remove EDTU/ASW: ", df_inflight_final.shape)
+
 df_inflight_final.to_csv(PT.path_wip_output + 'final_inflight.csv', index=0)
-print('Patient days DataFrame is successfully prepared ')
+print("Merge same day discharge with inflight data to calculate the patient days .... done")
+print("After removing EDTU/ASW, new dataframe size: ", df_inflight_final.shape)
 
 # use for F10
 df_inflight_lastMonth_w_dc = df_inflight_final[df_inflight_final['Inflight_Date'] >= first_lastMonth]
@@ -139,6 +161,7 @@ report_df_lodger_pt_days = pd.pivot_table(df_inflight_lodger, values='cnt', inde
                                           aggfunc=np.sum, margins=True, margins_name='Total')
 report_df_lodger_pt_days = pd.merge(report_df_lodger_pt_days, df_moh_speciality, how='right', on='Moh_Clinical_Dept')
 
+
 # Section 2: Generate admission report stats
 print('Start to prepare Admission statistics  ')
 df_adm['Adm_Ward'] = df_adm.apply(
@@ -147,7 +170,7 @@ df_adm['Adm_Type_MOH'] = df_adm.apply(
     lambda x: prep.combine_EM_EL(x['Adm_Type']), axis=1)
 df_adm['Class_with_icu_iso'] = df_adm.apply(
     lambda x: prep.pt_class_with_icu_iso(x['Wish_Cls'], x['Adm_Acmd_Cat'], x['Adm_Trt_Cat']), axis=1)
-df_adm = df_adm.loc[df_adm['Disch_Nrs_OU'].str.contains('LWEDTU|LWASW|LWDSW', regex=True) == False]
+df_adm = df_adm.loc[df_adm['Adm_Ward'].str.contains('LWEDTU|LWASW|LWDSW', regex=True) == False]
 df_adm.rename(columns={"Moh_Clinical_Dept(Adm)": 'Moh_Clinical_Dept'}, inplace=True)
 df_adm.to_csv(PT.path_wip_output + 'temp_adm.csv', index=0)
 
@@ -175,12 +198,13 @@ report_df_lodger_adm = pd.pivot_table(df_adm_lodger, values='cnt', index=['Moh_C
                                       aggfunc=np.sum, margins=True, margins_name='Total')
 report_df_lodger_adm = pd.merge(report_df_lodger_adm, df_moh_speciality, how='right', on='Moh_Clinical_Dept')
 
+print("Generated the lodger report based on admission and patient days ..... done")
 # df_adm.to_csv(PT.path_wip_output + 'temp_adm.csv', index=0)
 # df_adm_lodger.to_csv(PT.path_wip_output + 'temp_adm_lodger.csv', index=0)
 # patient days report - summarize to generate results
 
 # Section 3: Generate Discharge report stats
-print('Start to prepare Discharge statistics  ')
+
 # df_dc['Class_with_icu_iso'] = df_dc.apply(
 #     lambda x: prep.pt_class_with_icu_iso(x['Class_abc'], x['Adm_Acmd_Cat'], x['Adm_Trt_Cat']), axis=1)
 df_dc = df_dc.loc[df_dc['Nrs_OU'].str.contains('LWEDTU|LWASW|LWDSW', regex=True) == False]
@@ -188,6 +212,8 @@ df_dc['cls_icu_iso'] = df_dc.apply(
     lambda x: prep.pt_cls_icu_iso_for_disch(x['Class_abc'], x['Nrs_OU'], x['Trt_Cat']), axis=1)
 df_dc['death'] = df_dc.apply(lambda x: prep.death_indicator(x['Discharge_Type_Text']), axis=1)
 df_dc.to_csv(PT.path_wip_output + 'temp_disch.csv', index=0)
+print('Applied the necessary filter procedure to discharge data ....... done  ')
+
 report_df_disch_by_ward = pd.pivot_table(df_dc, values='cnt', index=['Nrs_OU'], columns=['Year', 'Month'],
                                          aggfunc=np.sum, margins=True, margins_name='Total')
 
@@ -201,13 +227,14 @@ report_df_F09_disch_death = pd.pivot_table(df_dc, values='death', index=['Moh_Cl
                                            aggfunc=np.sum, margins=True, margins_name='Total')
 report_df_F09_disch_death = pd.merge(report_df_F09_disch_death, df_moh_speciality, how='right', on='Moh_Clinical_Dept')
 
-report_df_disch_by_adm_type = pd.pivot_table(df_dc, values='cnt', index=['Nrs_OU'],
-                                             columns=['Year', 'Month', 'Adm_Type'],
-                                             aggfunc=np.sum, margins=True, margins_name='Total')
+df_dc_excl_24 = df_dc.loc[df_dc['Discharge_w_in_24_hrs'] != 'X']
+report_df_disch_type = pd.pivot_table(df_dc_excl_24, values='cnt', index=['Discharge_Type_Text'],
+                                      columns=['Year', 'Month'],
+                                      aggfunc=np.sum, margins=True, margins_name='Total')
 
 df_dc['Discharge_w_in_24_hrs'] = df_dc['Discharge_w_in_24_hrs'].replace(['X'], 1)
 report_df_disch_w_24h = pd.pivot_table(df_dc, values='Discharge_w_in_24_hrs', index=['Nrs_OU'],
-                                       columns=['Year', 'Month', 'Adm_Type'],
+                                       columns=['Year', 'Month'],
                                        aggfunc=np.sum, margins=True, margins_name='Total')
 
 report_df_daily_pt_days = pd.pivot_table(df_inflight_lastMonth, values='cnt', index=['Ward'],
@@ -261,6 +288,7 @@ report_finance_disch_ref_type = pd.pivot_table(df_dc, values='cnt',
                                                columns=['Year', 'Month'],
                                                aggfunc=np.sum, margins=True, margins_name='Total')
 
+print('Prepare all reports dataframe  ....... done  ')
 # reporting section for BIS
 df_bis_for_report = pd.read_csv(PT.path_wip_output + 'BMU_email.csv')
 # always extract the first import (based on rep_index)
@@ -279,6 +307,8 @@ report_df_bis_by_ward = pd.pivot_table(df_bis_for_report, values='BIS', index=['
                                        columns=['Year', 'Month', 'Day'],
                                        aggfunc=np.sum, margins=True, margins_name='Total')
 
+print('Reading BIS information ....... done  ')
+
 # start of report writer
 writer = pd.ExcelWriter(PT.path_report_output + 'Inpatient_report.xlsx', engine='xlsxwriter')
 
@@ -293,7 +323,7 @@ report_df_pt_days_acuity.to_excel(writer, sheet_name='pt_days_by_acuity')
 
 report_df_daily_disch.to_excel(writer, sheet_name='daily_disch')
 report_df_daily_pt_days.to_excel(writer, sheet_name='daily_pt_days')
-report_df_disch_by_adm_type.to_excel(writer, sheet_name='disch_by_adm_type')
+report_df_disch_type.to_excel(writer, sheet_name='disch_by_DischType')
 report_df_bis_by_ward.to_excel(writer, sheet_name='Bed_days_by_ward')
 report_df_bis_by_class.to_excel(writer, sheet_name='BIS_by_class')
 
@@ -318,4 +348,4 @@ report_ALOS_by_subspec = report_finance_pt_days_subspec / report_finance_dischar
 report_ALOS_by_subspec.to_excel(writer, sheet_name='ALOS_by_dept', float_format="%0.2f")
 
 writer.save()
-print("Reports successfully Generated")
+print("All reports successfully Generated")
