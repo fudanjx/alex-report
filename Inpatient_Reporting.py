@@ -4,6 +4,7 @@ import datetime
 import path as PT
 import data_prep as prep
 import calendar
+import xlwings as xw
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -122,7 +123,6 @@ df_inflight_final = pd.concat(frames)
 
 print("final inflight: ", df_inflight_final.shape)
 
-
 df_inflight_final["Month_abbr"] = df_inflight_final['Inflight_Date'].dt.month.apply(lambda x: calendar.month_abbr[x])
 df_inflight_final = prep.mapping_Trt_Cat(df_inflight_final, PT.path_lookup)
 df_inflight_final['Class_with_icu_iso'] = df_inflight_final['Class_abc']
@@ -161,7 +161,6 @@ report_df_lodger_pt_days = pd.pivot_table(df_inflight_lodger, values='cnt', inde
                                           aggfunc=np.sum, margins=True, margins_name='Total')
 report_df_lodger_pt_days = pd.merge(report_df_lodger_pt_days, df_moh_speciality, how='right', on='Moh_Clinical_Dept')
 
-
 # Section 2: Generate admission report stats
 print('Start to prepare Admission statistics  ')
 df_adm['Adm_Ward'] = df_adm.apply(
@@ -175,13 +174,17 @@ df_adm.rename(columns={"Moh_Clinical_Dept(Adm)": 'Moh_Clinical_Dept'}, inplace=T
 df_adm.to_csv(PT.path_wip_output + 'temp_adm.csv', index=0)
 
 # Generate F09 admission section
-report_df_F09_adm = pd.pivot_table(df_adm, values='cnt', index=['Moh_Clinical_Dept'],
+
+df_adm_lastmonth_F09 = df_adm[df_adm['Adm_Date'] >= first_lastMonth]
+report_df_F09_adm = pd.pivot_table(df_adm_lastmonth_F09[df_adm_lastmonth_F09['Adm_Date'] >= first_lastMonth]
+                                   , values='cnt', index=['Moh_Clinical_Dept'],
                                    columns=['Year', 'Month', 'Resident_Type', 'Class_with_icu_iso'],
                                    aggfunc=np.sum, margins=True, margins_name='Total')
+
 report_df_F09_adm = pd.merge(report_df_F09_adm, df_moh_speciality, how='right', on='Moh_Clinical_Dept')
 
 # for MOH F03
-df_adm_lodger = df_adm.loc[df_adm['Wish_Cls'].str.contains('B2|C', regex=True)]
+df_adm_lodger = df_adm_lastmonth_F09.loc[df_adm_lastmonth_F09['Wish_Cls'].str.contains('B2|C', regex=True)]
 df_adm_lodger = df_adm_lodger[df_adm_lodger['Adm_Acmd_Cat'].notna()]
 
 df_adm_lodger = df_adm_lodger.loc[df_adm_lodger['Adm_Acmd_Cat'].str.contains('A1|B1|B2', regex=True)]
@@ -189,7 +192,7 @@ df_adm_lodger = df_adm_lodger.loc[df_adm_lodger['Adm_Acmd_Cat'] != df_adm_lodger
 df_adm_lodger.to_csv(PT.path_wip_output + 'temp_adm_lodger.csv', index=0)
 df_adm_lodger['Moh_Clinical_Dept'] = df_adm_lodger['Moh_Clinical_Dept'].fillna(
     df_adm_lodger['Moh_Clinical_Dept(Disch)'])
-df_adm_lodger = df_adm_lodger.loc[df_adm_lodger['Adm_Date'] >= first_lastyear]
+# df_adm_lodger = df_adm_lodger.loc[df_adm_lodger['Adm_Date'] >= first_lastyear]
 
 report_df_adm_by_ward = pd.pivot_table(df_adm, values='cnt', index=['Adm_Ward'], columns=['Year', 'Month'],
                                        aggfunc=np.sum, margins=True, margins_name='Total')
@@ -217,12 +220,14 @@ print('Applied the necessary filter procedure to discharge data ....... done  ')
 report_df_disch_by_ward = pd.pivot_table(df_dc, values='cnt', index=['Nrs_OU'], columns=['Year', 'Month'],
                                          aggfunc=np.sum, margins=True, margins_name='Total')
 
-report_df_F09_disch = pd.pivot_table(df_dc, values='cnt', index=['Moh_Clinical_Dept'],
+# for MOH report, only take last month data
+df_dc_lastmth_F09 = df_dc[df_dc['Adm_Date'] >= first_lastMonth]
+report_df_F09_disch = pd.pivot_table(df_dc_lastmth_F09, values='cnt', index=['Moh_Clinical_Dept'],
                                      columns=['Year', 'Month', 'Resident_Type', 'cls_icu_iso'],
                                      aggfunc=np.sum, margins=True, margins_name='Total')
 report_df_F09_disch = pd.merge(report_df_F09_disch, df_moh_speciality, how='right', on='Moh_Clinical_Dept')
 
-report_df_F09_disch_death = pd.pivot_table(df_dc, values='death', index=['Moh_Clinical_Dept'],
+report_df_F09_disch_death = pd.pivot_table(df_dc_lastmth_F09, values='death', index=['Moh_Clinical_Dept'],
                                            columns=['Year', 'Month', 'Resident_Type'],
                                            aggfunc=np.sum, margins=True, margins_name='Total')
 report_df_F09_disch_death = pd.merge(report_df_F09_disch_death, df_moh_speciality, how='right', on='Moh_Clinical_Dept')
@@ -244,49 +249,49 @@ report_df_daily_disch = pd.pivot_table(df_dc_lastMonth, values='cnt', index=['Nr
                                        columns=['Year', 'Month', 'Date'],
                                        aggfunc=np.sum, margins=True, margins_name='Total')
 
-report_finance_pt_days1 = pd.pivot_table(df_inflight_final, values='cnt', index=['Program', 'Dept_Name', 'Class_abc'],
-                                         columns=['Year', 'Month'],
-                                         aggfunc=np.sum, margins=True, margins_name='Total')
+report_df_fin_pt_days_abc = pd.pivot_table(df_inflight_final, values='cnt', index=['Program', 'Dept_Name', 'Class_abc'],
+                                           columns=['Year', 'Month'],
+                                           aggfunc=np.sum, margins=True, margins_name='Total')
 
-report_finance_pt_days2 = pd.pivot_table(df_inflight_final, values='cnt',
-                                         index=['Program', 'Dept_Name', 'Class_with_icu_iso'],
-                                         columns=['Year', 'Month'],
-                                         aggfunc=np.sum, margins=True, margins_name='Total')
-
-report_F10_pt_days = pd.pivot_table(df_inflight_lastMonth_w_dc, values='cnt',
-                                    index=['Moh_Clinical_Dept'],
-                                    columns=['Year', 'Month', 'Resident_Type', 'Class_icu_iso_MOH'],
-                                    aggfunc=np.sum, margins=True, margins_name='Total')
-
-report_finance_pt_days_subspec = pd.pivot_table(df_inflight_final, values='cnt',
-                                                index=['Program', 'Dept_Name'],
+report_df_fin_pt_days_w_iso_HD = pd.pivot_table(df_inflight_final, values='cnt',
+                                                index=['Program', 'Dept_Name', 'Class_with_icu_iso'],
                                                 columns=['Year', 'Month'],
                                                 aggfunc=np.sum, margins=True, margins_name='Total')
+
+report_df_F10_pt_days = pd.pivot_table(df_inflight_lastMonth_w_dc, values='cnt',
+                                       index=['Moh_Clinical_Dept'],
+                                       columns=['Year', 'Month', 'Resident_Type', 'Class_icu_iso_MOH'],
+                                       aggfunc=np.sum, margins=True, margins_name='Total')
+
+report_df_fin_pt_days_dept = pd.pivot_table(df_inflight_final, values='cnt',
+                                            index=['Program', 'Dept_Name'],
+                                            columns=['Year', 'Month'],
+                                            aggfunc=np.sum, margins=True, margins_name='Total')
 
 report_df_pt_days_by_ward = pd.pivot_table(df_inflight_final, values='cnt',
                                            index=['Ward'],
                                            columns=['Year', 'Month'],
                                            aggfunc=np.sum, margins=True, margins_name='Total')
 
-report_finance_discharge1 = pd.pivot_table(df_dc, values='cnt',
-                                           index=['Program', 'Dept_Name', 'Class_abc'],
-                                           columns=['Year', 'Month'],
-                                           aggfunc=np.sum, margins=True, margins_name='Total')
+report_df_fin_disch_abc = pd.pivot_table(df_dc, values='cnt',
+                                         index=['Program', 'Dept_Name', 'Class_abc'],
+                                         columns=['Year', 'Month'],
+                                         aggfunc=np.sum, margins=True, margins_name='Total')
 
-report_finance_discharge2 = pd.pivot_table(df_dc, values='cnt',
-                                           index=['Program', 'Dept_Name', 'cls_icu_iso'],
-                                           columns=['Year', 'Month'],
-                                           aggfunc=np.sum, margins=True, margins_name='Total')
+report_df_fin_disch_w_iso_HD = pd.pivot_table(df_dc, values='cnt',
+                                              index=['Program', 'Dept_Name', 'cls_icu_iso'],
+                                              columns=['Year', 'Month'],
+                                              aggfunc=np.sum, margins=True, margins_name='Total')
 
-report_finance_discharge_subspec = pd.pivot_table(df_dc, values='cnt',
-                                                  index=['Program', 'Dept_Name'],
-                                                  columns=['Year', 'Month'],
-                                                  aggfunc=np.sum, margins=True, margins_name='Total')
+report_df_fin_disch_dept = pd.pivot_table(df_dc, values='cnt',
+                                          index=['Program', 'Dept_Name'],
+                                          columns=['Year', 'Month'],
+                                          aggfunc=np.sum, margins=True, margins_name='Total')
 
-report_finance_disch_ref_type = pd.pivot_table(df_dc, values='cnt',
-                                               index=['Program', 'Dept_Name', 'ref_type_fin'],
-                                               columns=['Year', 'Month'],
-                                               aggfunc=np.sum, margins=True, margins_name='Total')
+report_df_fin_disch_ref_type = pd.pivot_table(df_dc, values='cnt',
+                                              index=['Program', 'Dept_Name', 'ref_type_fin'],
+                                              columns=['Year', 'Month'],
+                                              aggfunc=np.sum, margins=True, margins_name='Total')
 
 print('Prepare all reports dataframe  ....... done  ')
 # reporting section for BIS
@@ -309,43 +314,49 @@ report_df_bis_by_ward = pd.pivot_table(df_bis_for_report, values='BIS', index=['
 
 print('Reading BIS information ....... done  ')
 
-# start of report writer
-writer = pd.ExcelWriter(PT.path_report_output + 'Inpatient_report.xlsx', engine='xlsxwriter')
-
+# Derive the ALOS DataFrame
 report_df_ALOS_by_ward = report_df_pt_days_by_ward / report_df_disch_by_ward
+report_df_ALOS_by_dept_cls = report_df_fin_pt_days_abc / report_df_fin_disch_abc
+report_df_ALOS_by_dept = report_df_fin_pt_days_dept / report_df_fin_disch_dept
+# round the decimal
+report_df_ALOS_by_ward = report_df_ALOS_by_ward.round(decimals=1)
+report_df_ALOS_by_dept_cls = report_df_ALOS_by_dept_cls.round(decimals=1)
+report_df_ALOS_by_dept = report_df_ALOS_by_dept.round(decimals=1)
 
-report_df_adm_by_ward.to_excel(writer, sheet_name='adm_by_ward')
-report_df_disch_by_ward.to_excel(writer, sheet_name='disch_by_ward')
-report_df_pt_days_by_ward.to_excel(writer, sheet_name='pt_days_by_ward')
-report_df_ALOS_by_ward.to_excel(writer, sheet_name='ALOS_by_ward', float_format="%0.2f")
+# Open a template file with Xlwings
+wb = xw.Book(PT.path_report_output + 'Inpt_rpt_template1.0.xlsx')
 
-report_df_pt_days_acuity.to_excel(writer, sheet_name='pt_days_by_acuity')
+# write dataframe into the template
+Report_start = lastYear.replace(day=1).strftime("%b-%Y")
+wb.sheets[0]['A2'].value = "REPORTING PERIOD FROM "+Report_start+' ONWARDS'
+wb.sheets[1]['A4'].value = report_df_adm_by_ward
+wb.sheets[2]['A4'].value = report_df_disch_by_ward
+wb.sheets[3]['A4'].value = report_df_pt_days_by_ward
+wb.sheets[4]['A4'].value = report_df_ALOS_by_ward
+wb.sheets[5]['A4'].value = report_df_pt_days_acuity
+wb.sheets[6]['A4'].value = report_df_disch_type
+wb.sheets[7]['A4'].value = report_df_disch_w_24h
+wb.sheets[8]['A4'].value = report_df_daily_disch
+wb.sheets[9]['A4'].value = report_df_daily_pt_days
+wb.sheets[10]['A4'].value = report_df_bis_by_ward
+wb.sheets[11]['A4'].value = report_df_bis_by_class
+wb.sheets[12]['A4'].value = report_df_F09_adm
+wb.sheets[13]['A4'].value = report_df_F09_disch
+wb.sheets[14]['A4'].value = report_df_F09_disch_death
+wb.sheets[15]['A4'].value = report_df_F10_pt_days
+wb.sheets[16]['A4'].value = report_df_lodger_adm
+wb.sheets[17]['A4'].value = report_df_lodger_pt_days
+wb.sheets[18]['A4'].value = report_df_fin_disch_abc
+wb.sheets[19]['A4'].value = report_df_fin_disch_w_iso_HD
+wb.sheets[20]['A4'].value = report_df_fin_disch_dept
+wb.sheets[21]['A4'].value = report_df_fin_disch_ref_type
+wb.sheets[22]['A4'].value = report_df_fin_pt_days_abc
+wb.sheets[23]['A4'].value = report_df_fin_pt_days_w_iso_HD
+wb.sheets[24]['A4'].value = report_df_fin_pt_days_dept
+wb.sheets[25]['A4'].value = report_df_ALOS_by_dept_cls
+wb.sheets[26]['A4'].value = report_df_ALOS_by_dept
 
-report_df_daily_disch.to_excel(writer, sheet_name='daily_disch')
-report_df_daily_pt_days.to_excel(writer, sheet_name='daily_pt_days')
-report_df_disch_type.to_excel(writer, sheet_name='disch_by_DischType')
-report_df_bis_by_ward.to_excel(writer, sheet_name='Bed_days_by_ward')
-report_df_bis_by_class.to_excel(writer, sheet_name='BIS_by_class')
+# Save under a new file name
+wb.save(PT.path_report_output + 'new_inpt_rpt.xlsx')
 
-report_df_disch_w_24h.to_excel(writer, sheet_name='disch_w_24h')
-report_df_F09_adm.to_excel(writer, sheet_name='MOH_F09_Adm')
-report_df_F09_disch.to_excel(writer, sheet_name='MOH_F09_Disch')
-report_df_F09_disch_death.to_excel(writer, sheet_name='MOH_F09_death')
-report_F10_pt_days.to_excel(writer, sheet_name='MOH_F10_ptdays')
-report_df_lodger_adm.to_excel(writer, sheet_name='MOH_F03_Lodger')
-report_df_lodger_pt_days.to_excel(writer, sheet_name='MOH_F03a_Lodger')
-report_finance_discharge1.to_excel(writer, sheet_name='Fin_disch1')
-report_finance_discharge2.to_excel(writer, sheet_name='Fin_disch2')
-report_finance_discharge_subspec.to_excel(writer, sheet_name='Fin_disch_dept')
-report_finance_disch_ref_type.to_excel(writer, sheet_name='Fin_disch_ref_type')
-report_finance_pt_days1.to_excel(writer, sheet_name='Fin_pt_days1')
-report_finance_pt_days2.to_excel(writer, sheet_name='Fin_pt_days2')
-report_finance_pt_days_subspec.to_excel(writer, sheet_name='Fin_pt_days_dept')
-
-report_ALOS_by_subspec_cls = report_finance_pt_days1 / report_finance_discharge1
-report_ALOS_by_subspec_cls.to_excel(writer, sheet_name='ALOS_by_dept&cls', float_format="%0.2f")
-report_ALOS_by_subspec = report_finance_pt_days_subspec / report_finance_discharge_subspec
-report_ALOS_by_subspec.to_excel(writer, sheet_name='ALOS_by_dept', float_format="%0.2f")
-
-writer.save()
 print("All reports successfully Generated")
