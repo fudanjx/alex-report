@@ -50,6 +50,7 @@ df_adm = df_adm.loc[df_adm['Adm_Status'] != 'P']
 print("Filter for last 12 months inpatient data .... done")
 
 # customize for ChweeHuat's report
+Report_start_last_mth = lastMonth.replace(day=1).strftime("%b-%Y")
 df_adm_lastmonth_ChweeHuat = df_adm[df_adm['Adm_Date'] >= first_lastMonth]
 df_adm_lastmonth_ChweeHuat = df_adm_lastmonth_ChweeHuat.loc[
     df_adm_lastmonth_ChweeHuat['Adm_Type'].str.contains('EM|SD|DI|EL', regex=True)]
@@ -60,7 +61,7 @@ report_df_ChweeHuat = df_adm_lastmonth_ChweeHuat.loc[:, {
                                                             'Adm_Nrs_OU', 'Disch_Date', 'Disch_Time', 'Current_Ward'}]
 report_df_ChweeHuat = report_df_ChweeHuat.reindex(columns=[
     'Case_No', 'C', 'Adm_Date', 'Adm_Time', 'Adm_Cls', 'Adm_Nrs_OU', 'Disch_Date', 'Disch_Time', 'Current_Ward'])
-report_df_ChweeHuat.to_csv(PT.path_report_output + 'ChweeHuat_monthly_adm_rpt.csv', index=0)
+report_df_ChweeHuat.to_csv(PT.path_report_output + 'ChweeHuat_monthly_adm_rpt('+Report_start_last_mth+').csv', index=0)
 
 print("Cheehuat's case level admission report generation .... done")
 
@@ -357,6 +358,6 @@ wb.sheets[25]['A4'].value = report_df_ALOS_by_dept_cls
 wb.sheets[26]['A4'].value = report_df_ALOS_by_dept
 
 # Save under a new file name
-wb.save(PT.path_report_output + 'new_inpt_rpt.xlsx')
+wb.save(PT.path_report_output + 'new_inpt_rpt('+Report_start_last_mth+').xlsx')
 
 print("All reports successfully Generated")
