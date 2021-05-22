@@ -207,3 +207,12 @@ def fin_ref_hosp_soc(ref_type, ref_hosp):
         return 'GP'
     else:
         return 'Others'
+
+
+def prelim_flag_enter_validation():
+    question = "Would you like extract this file as prelim? (y/Y or n/N): "
+    choice = input(question)
+    while choice not in ['y', 'Y', 'n', 'N']:
+        print('Invalid choice')
+        choice = input(question)
+    return choice
