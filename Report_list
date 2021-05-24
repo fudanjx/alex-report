@@ -67,7 +67,7 @@ Section 2: Outpatient report
     
 12. F04 New SOC attendance (inclusion and exclusion follow 11.a. There is mapping manual referral
 
-13.	F12 report, by resident type(map from SAP class),  telehealth health status (visit type), specialty (dept OU),  Repeat/new, subsidy status (P,S)
+13.	F12 report, SOC attendence by resident type(map from SAP class),  telehealth health status (visit type), specialty (dept OU),  Repeat/new, subsidy status (P,S)
   a.	Might need to convert to F12 old template for NUHS submission
   
 14.	For RICE. Discuss to give SAP access to the team. (Sherwin will apply SAP)
