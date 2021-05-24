@@ -3,32 +3,36 @@ Section1, patient days + inflight + BIS
   a.	Admission, discharge by ward
   b.	For non inpt ward admit nursing OU, need to use current ward to replace the admission nursing  OU
 
-2.	Chwee Huat (pharmacy) … include both current ward and admission ward
+2. Admission report  (to follow up)
+  a. By paying and subsizied
+
+3.	Chwee Huat (pharmacy) … include both current ward and admission ward
   a.	Admission report , by individual case
   b.	Exclude EDTU admit ??
   c.	Exclude SO and TA
 
-3.	Pei Yin (Pharmacy )
+4.	Pei Yin (Pharmacy )
   a.	Purely discharge by discharge types  (based on 4 inpatient admit types, SD/DI/EL/EM)
   b.	No need to breakdown by ward/admit type, only break down by discharge type
   c.	Extra column discharge < 24 hrs
   d.	Overall discharge and admission (volumetric)
 
-4.	Nursing/infection control/MA
+5.	Nursing/infection control/MA
   a.	In Patient days by ward
   b.	Ward 4A KIV
 
-5.	Meal Order
+6.	Meal Order
   a.	Daily discharge
   b.	Inflight
   c.	EDTU included, ASW,DSW not included
+   
 
-6.	MMD (Simon) , by ward, break into day
+7.	MMD (Simon) , by ward, break into day   （To Follow Up)
   a.	Patients days
   b.	Bed days
   c.	Discharges
-  d.	BOR
-  e.	ALOS
+  d.	BOR（average for the month)
+  e.	ALOS  
 
 7.	Finance report
   a. Patient days by patient class (e.g. A = A, AP,  NR and all the RF for finance)  same as F10 (F10 for CRF will classify under C)
@@ -50,7 +54,7 @@ Section1, patient days + inflight + BIS
   b.	Ignore ICU/HD/ISO
   c.	Purely based on admission
   
-10.	F03a (lodger report), no need to split into elective and emergency)
+10.	F03a (lodger report), no need to split into elective and emergency
   a.	Matrix from patient class to acc class
   b.	Ignore ICU/HD/ISO
   c.	Purely based on patient days/inflight
@@ -72,15 +76,15 @@ Section 2: Outpatient report
   
 14.	For RICE. Discuss to give SAP access to the team. (Sherwin will apply SAP)
 
-15.	NUHS resource consolidation 
-  a.	SOC room utilization
-    i.	By slot - in fact it’s the slot utilization (user fill in actual , no show and open slots)
-    ii.	By room, user fill in open sessions, consult room (for j K need to fill  AHP sessions, then convert to room used and round up)
-    
-16.	MOH SOC Capacity Census, submit on Jan & Aug, data submit by Ops. 
+15.	MOH SOC Capacity Census, submit on Jan & Aug, data submit by Ops. 
   a.	Exclude AHP rooms, request Ops to submit  
-  
-17.	MOH F41, quarterly， patient waiting time for SOC consult, 
+
+16. MOH F42, quarterly report, elective surgery waiting time  (Jeremiah)
+  a. Case level
+  b. OOTS as data resources
+  c. SSS team scrub through the cases booking rationale and exclude when neccesary  
+ 
+17.	MOH F41, quarterly report, patient waiting time for SOC consult
   a.	Does not cover walk in patient
   b.	Only FV/RV
   c.	Case level
@@ -91,39 +95,46 @@ Section 2: Outpatient report
   b.	Allied heath F24
   c.	DI,  O03 – also need to send to NUHS dashboard
 
-
 Section 3: Procedure report (monthly)
 19.	Finance report
   a.	For DS/ES/DO, number of episode, by subspec, patient class, location (Trt OU), also use SAP surgical visit report – can use unique case number 
   b.	For DS/ES/DO, number of procedures, by subspec, patient class, location (Trt OU), can purely base on SAP surgical visits report 
   c.	OT utilization 
 
-20.	NUHS, OT utilization by discipline and room
-  a.	By discipline allocated time, by MOT and DSOT
-  b.	By OR room, by MOT and DSOT. We need planned session, OT capacity time and actual procedure duration (+15 for each procedure using OT exit and enter time) AC,AP, PC
-  c.	Cluster report does not include Endo
-  
-21.	MOH F14, inpatient surgical procedure, 
+20.	NUHS resource dashboard - monthly
+  1. OT utilization by discipline and room
+    a.	By discipline allocated time, by MOT and DSOT
+    b.	By OR room, by MOT and DSOT. We need planned session, OT capacity time and actual procedure duration (+15 for each procedure using OT exit and enter time) AC,AP, PC
+    c.	Cluster report does not include Endo
+  2	SOC room utilization
+    i.	By slot - in fact it’s the slot utilization (user fill in actual , no show and open slots)
+    ii.	By room, user fill in open sessions, consult room (for j K need to fill  AHP sessions, then convert to room used and round up)
+
+21. One NUHS Task Force:
+  1. OT lead time provide , same as F42 (need to ask Jeremiah) 
+  2. percentile (50% and 95%)
+
+22.	MOH F14, inpatient surgical procedure, 
   a.	based on SAP surgical visit report,  by DI/SD/EM/EL, breakdown by sub-spec, by OP Table
 
-22.	MOH F15, day surgery procedure 
+23.	MOH F15, day surgery procedure 
   a.	based on SAP surgical visit report,  by DI/SD/EM/EL, breakdown by sub-spec, by OP Table
 
 Section 4: Balance score card reports (Quarterly)
-23.	SO1.3 for new pt using our signature program
+24.	SO1.3 for new pt using our signature program
   a.	For Outpatient: Unique patient first time enter into the program , separate by outpatient and inpatient, means if pt enter OP before, will consider again if patient enter IP
   b.	If patient new-enroll in different program, also count. Outpatient can first cut by FV
   c.	Inpatient also look into whether admit into same program
   d.	Quarterly – April, July, Oct, Jan for submission
 
-24.	SO1.2, appointment consolidation
+25.	SO1.2, appointment consolidation
   a.	To be confirmed
   b.	Inpat discharge with outpatient care consolidated at AH
   c.	Denominator: (might need to exclude covid??)
     i.	Adm referral source must exclude non NUHS institution
     ii.	Discharge type: dis NUHS hospital, follow up SOC, pt discharged
     iii.	Discharge Dept : FASMED and GERIMED
-  d.	Numerator
+  d.	Numerator 
     i.	Check all the SOC appoint (actual + plan)
     ii.	Check against the discharge list
     iii.	SOC appointment happen within the period
@@ -132,31 +143,31 @@ Section 4: Balance score card reports (Quarterly)
 
 Section 5: Yearly and half yearly reports 
 
-25.	MOH F35, Patient profiles of new SOC attendance, yearly
+26.	MOH F35, Patient profiles of new SOC attendance, yearly
   a.	Age, gender, telehealth(visit type), ethnicity
   b.	FW/FV, FD/DF
   
-26.	MOH O06, yearly at end of year, as of 31 Dec , mostly Ops to submit
+27.	MOH O06, yearly at end of year, as of 31 Dec , mostly Ops to submit
   a.	SOC rooms
   b.	OT/Endo rooms
 
-27.	HAS, Yearly report 
+28.	HAS, Yearly report 
   a.	knee and hip replacement report
 
-28.	HR Half Yearly job plan
+29.	HR Half Yearly job plan
   a.	SOC attendance FV/RV (include telehealth), inpt discharge, UCC, day surgery (ES, DS, DO, by procedures, SAP data) , inpatient surgery (EM, EL, SD, DI, by procedures, SAP data), show by MCR/Staff name
   b.	Anesthesia workload  (also based on surgical visit report,  Anesthetist column,  group the patient class into sub and pte
   c.	EMD(UCC), attending physician, and attendance
   
-29.	MOH Yearly O08   ICU/ISO capacity, yearly 31 Dec snapshot, manual submission from Ops
+30.	MOH Yearly O08   ICU/ISO capacity, yearly 31 Dec snapshot, manual submission from Ops
 
-30.	MOH Yearly F36,  EMD patient profile, yearly 31 Dec snapshot, use 1 yr data.  By age, race, gender, residency, SAP there is no residency status (can take from PASS)
+31.	MOH Yearly F36,  EMD patient profile, yearly 31 Dec snapshot, use 1 yr data.  By age, race, gender, residency, SAP there is no residency status (can take from PASS)
   a.	Use the subvention  document code (see Joyce’s email notes), to group SG/PR/Gender/Resident
   
-31.	MOH Yearly F44,  ED/UCC attendance, by diagnosis code and volume
+32.	MOH Yearly F44,  ED/UCC attendance, by diagnosis code and volume
 
 Section 6： Other reports 
-32.	OPE exclusion list （month), OPE will submit to MOH
+33.	OPE exclusion list （month), OPE will submit to MOH
   a.  UCC – Arrival Mode: Police Vehicle Referral Hospital: IMH, Court, Police 
   b.  Case End Type: Discharge to Police, Discharge to Prison, Discharge to DRC
   c.	SOC – Referral Hospital: IMH, Court, Police Attn Physician MCR: 2 Psych Med Doctors
@@ -165,6 +176,7 @@ Section 6： Other reports
   f.  IC Starts with S/T  ， X
   g.	also exclude SOC attendance by Psychologist, e.g. Neo Li Fang , their MCR no. usually start with “LPSY” (for Li Fang, hers is LPSY001)
 
+## Other Notes
 Reports need manual verification:
   a.	SOC FV (from SAP appointment Waiting Time report)
   b.	Elective Surgery Waiting Time report (may need to pass back to SSS)
@@ -179,7 +191,21 @@ Irregularity checking logic:
   c.	CHAS/FMC need to check and find out which FMC (For F04 report)
   d.	Finance report: Ref Type mis-match with Ref Hospital (e.g. NUH -> NHG hospitals. It is in finance report : inpatient discharge  and outpatient workload section)
   e.	Procedure Report: Wrong Dr vs Dept match for procedure work done (Single Dr performed in more than 1 unrelated dept OU. Those related dept OU include 
-    i.	LSFAGS  Fast General Surgery,  vs.  LSCHROGS Chronic General Surgery
+    i.	LSFAGS  Fast General Surgery vs. LSCHROGS Chronic General Surgery
     ii.	LSHAORTH HA General Orthopaedic vs. LSHAAREC HA Adult Reconstruction
     iii.	LSFAMED Fast Medicine vs. LSCHRO Chronic
     iv.	Extract those cases number for verification
+    
+ P4P folder cleaning up follow up:  first 3 reports plan to request MA to upload
+ 	1. CPCRE
+	2. MRSA
+	3. Readmission
+	4. F09
+	5. F10
+  6. F40
+ 
+ NGEMR follow up:
+	1. Need to sign up new team member to be in the access list for rehab and MSW
+	2. For Lab, the data will still send out from Lab staff. Whether we are still using TD/Synergy (business as usual), or we plan to onboard to Becker?, Contact person: Kelly
+	3. Liza fan Yan Ping (NUHS) - SPOC for report
+  4. Voon How Rosette contact person for MOH report distribution 
