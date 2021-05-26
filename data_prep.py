@@ -16,7 +16,7 @@ def clean_raw_extraction(source_path, filename, wip_path, lookup_path):
     # read raw download file with 'skiprows' based on idx value obtained
 
     df = pd.read_csv(source_path + filename, sep='\t',
-                     skiprows=idx[0], skipfooter=1, skip_blank_lines=True,
+                     skiprows=idx[0]+1, skipfooter=1, skip_blank_lines=True,
                      engine='python')
     # find all the "unnamed" column which are empty column, and remove them
     cols = [item for item in df.columns if item.lower()[:7] != 'unnamed']

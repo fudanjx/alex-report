@@ -8,8 +8,8 @@ import data_prep as prep              # custom module for file cleaning
 import path as PT
 
 df = pd.DataFrame()
-file = "SOC NUH Planned.XLS"
-path = 'D:/Dropbox/HIM/Raw_Download/Other_reports/'
+file = "Admission2020.XLS"
+path = 'D:/Dropbox/HIM/Raw_Download/Admission/'
 # Raw data file should be saved at others
 
 # inspect the first 50 rows to find out which row start with actual data header.
@@ -24,7 +24,7 @@ idx = df[df[col[0]].astype(str).str.contains("Case")].index.values
 # read raw download file with 'skiprows' based on idx value obtained
 
 df = pd.read_csv(path + file, sep='\t',
-                 skiprows=idx[0], skipfooter=1, skip_blank_lines=True,
+                 skiprows=idx[0]+1, skipfooter=1, skip_blank_lines=True,
                  engine='python')
 
 print(df)
@@ -47,7 +47,7 @@ print(df)
 print(df.shape)
 
 df = df.loc[df['Case_No'].notna(), :]
-df = df.loc[df['Case_No'].str.contains('15'), :]   # NUH case number start with 15
+df = df.loc[df['Case_No'].str.contains('2800'), :]   # NUH case number start with 15
 df['cnt'] = 1
 df = prep.Date_Conversion(df)
 
@@ -57,9 +57,9 @@ print(df.shape)
 print(file, " Processed")
 
 # to avoid the encoding error
-df['Postal_Code'] = df['Postal_Code'].str.slice(0, 6)
+# df['Postal_Code'] = df['Postal_Code'].str.slice(0, 6)
 
-df.to_csv(PT.path_wip_output + 'Combined_other.csv', index=False)
-df.to_parquet(PT.path_wip_output+"Combined_other.parquet", index=False)
+df.to_csv(PT.path_wip_output + 'single_SOC.csv', index=False)
+df.to_parquet(PT.path_wip_output+"single_SOC.parquet", index=False)
 print("Other data: ", df.shape)
-print("Step 7 successfully completed - data clean up done")
+print("Extraction successfully completed - data clean up done")
