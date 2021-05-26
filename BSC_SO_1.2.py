@@ -1,7 +1,7 @@
 import pandas as pd
 import path as PT
 import datetime
-
+# initial commit
 desired_width = 6200
 pd.set_option('display.width', desired_width)
 pd.set_option('display.max_columns', 12)
