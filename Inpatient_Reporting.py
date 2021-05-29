@@ -5,6 +5,7 @@ import path as PT
 import data_prep as prep
 import calendar
 import xlwings as xw
+from calendar import monthrange
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -61,7 +62,8 @@ report_df_ChweeHuat = df_adm_lastmonth_ChweeHuat.loc[:, {
                                                             'Adm_Nrs_OU', 'Disch_Date', 'Disch_Time', 'Current_Ward'}]
 report_df_ChweeHuat = report_df_ChweeHuat.reindex(columns=[
     'Case_No', 'C', 'Adm_Date', 'Adm_Time', 'Adm_Cls', 'Adm_Nrs_OU', 'Disch_Date', 'Disch_Time', 'Current_Ward'])
-report_df_ChweeHuat.to_csv(PT.path_report_output + 'ChweeHuat_monthly_adm_rpt('+Report_start_last_mth+').csv', index=0)
+report_df_ChweeHuat.to_csv(PT.path_report_output + 'ChweeHuat_monthly_adm_rpt(' + Report_start_last_mth + ').csv',
+                           index=0)
 
 print("Cheehuat's case level admission report generation .... done")
 
@@ -168,6 +170,8 @@ df_adm['Adm_Ward'] = df_adm.apply(
     lambda x: prep.replace_with_current_ward(x['Adm_Nrs_OU'], x['Current_Ward']), axis=1)
 df_adm['Adm_Type_MOH'] = df_adm.apply(
     lambda x: prep.combine_EM_EL(x['Adm_Type']), axis=1)
+df_adm['Paying_Status'] = df_adm.apply(
+    lambda x: prep.pt_cls_sub_paying(x['Adm_Cls']), axis=1)
 df_adm['Class_with_icu_iso'] = df_adm.apply(
     lambda x: prep.pt_class_with_icu_iso(x['Wish_Cls'], x['Adm_Acmd_Cat'], x['Adm_Trt_Cat']), axis=1)
 df_adm = df_adm.loc[df_adm['Adm_Ward'].str.contains('LWEDTU|LWASW|LWDSW', regex=True) == False]
@@ -195,6 +199,8 @@ df_adm_lodger['Moh_Clinical_Dept'] = df_adm_lodger['Moh_Clinical_Dept'].fillna(
     df_adm_lodger['Moh_Clinical_Dept(Disch)'])
 # df_adm_lodger = df_adm_lodger.loc[df_adm_lodger['Adm_Date'] >= first_lastyear]
 
+report_df_adm_by_paying = pd.pivot_table(df_adm, values='cnt', index=['Paying_Status'], columns=['Year', 'Month'],
+                                         aggfunc=np.sum, margins=True, margins_name='Total')
 report_df_adm_by_ward = pd.pivot_table(df_adm, values='cnt', index=['Adm_Ward'], columns=['Year', 'Month'],
                                        aggfunc=np.sum, margins=True, margins_name='Total')
 report_df_lodger_adm = pd.pivot_table(df_adm_lodger, values='cnt', index=['Moh_Clinical_Dept'],
@@ -295,25 +301,53 @@ report_df_fin_disch_ref_type = pd.pivot_table(df_dc, values='cnt',
                                               aggfunc=np.sum, margins=True, margins_name='Total')
 
 print('Prepare all reports dataframe  ....... done  ')
+
 # reporting section for BIS
 df_bis_for_report = pd.read_csv(PT.path_wip_output + 'BMU_email.csv')
 # always extract the first import (based on rep_index)
 df_bis_for_report = df_bis_for_report.loc[df_bis_for_report['rep_index'] == 0]
 # take note the double square bracket below
 df_bis_for_report['pd_date'] = pd.to_datetime(df_bis_for_report[['Year', 'Month', 'Day']])
-df_bis_for_report = df_bis_for_report[df_bis_for_report['pd_date'] >= first_lastMonth]
+df_bis_for_report = df_bis_for_report[df_bis_for_report['pd_date'] >= first_lastyear]
 df_bis_for_report = df_bis_for_report[df_bis_for_report['pd_date'] < first_this_month]
 df_nrs_ou = pd.read_excel(PT.path_lookup + 'Class.xlsx', sheet_name="Nrs_OU",
                           index_col='Ward')
 df_bis_for_report = pd.merge(df_bis_for_report, df_nrs_ou, how='left', on='Ward')
 report_df_bis_by_class = pd.pivot_table(df_bis_for_report, values='BIS', index=['Class'],
-                                        columns=['Year', 'Month', 'Day'],
+                                        columns=['Year', 'Month'],
                                         aggfunc=np.sum, margins=True, margins_name='Total')
 report_df_bis_by_ward = pd.pivot_table(df_bis_for_report, values='BIS', index=['Nrs_OU'],
-                                       columns=['Year', 'Month', 'Day'],
+                                       columns=['Year', 'Month'],
                                        aggfunc=np.sum, margins=True, margins_name='Total')
+report_df_bis_by_class_avg = pd.pivot_table(df_bis_for_report, values='BIS', index=['Class'],
+                                            columns=['Year', 'Month'],
+                                            aggfunc=np.sum).round(decimals=0)
+report_df_bis_by_ward_avg = pd.pivot_table(df_bis_for_report, values='BIS', index=['Nrs_OU'],
+                                           columns=['Year', 'Month'],
+                                           aggfunc=np.sum).round(decimals=0)
 
-print('Reading BIS information ....... done  ')
+# Gives number of days in the month and divides each column by those days
+for i in range(len(report_df_bis_by_ward_avg.columns)):
+    report_df_bis_by_ward_avg[report_df_bis_by_ward_avg.columns[i]] = report_df_bis_by_ward_avg[
+                                                                          report_df_bis_by_ward_avg.columns[i]] / \
+                                                                      monthrange(
+                                                                          report_df_bis_by_ward_avg.columns[i][0],
+                                                                          report_df_bis_by_ward_avg.columns[i][1])[1]
+
+for i in range(len(report_df_bis_by_class_avg.columns)):
+    report_df_bis_by_class_avg[report_df_bis_by_class_avg.columns[i]] = report_df_bis_by_class_avg[
+                                                                            report_df_bis_by_class_avg.columns[i]] / \
+                                                                        monthrange(
+                                                                            report_df_bis_by_class_avg.columns[i][0],
+                                                                            report_df_bis_by_class_avg.columns[i][1])[1]
+
+report_df_bis_by_ward_avg = np.round(report_df_bis_by_ward_avg, 0)
+report_df_bis_by_class_avg = np.round(report_df_bis_by_class_avg, 0)
+
+print('Processing BIS information ....... done  ')
+
+# Derive the BOR DataFrame
+report_df_BOR_by_ward = report_df_pt_days_by_ward / report_df_bis_by_ward
 
 # Derive the ALOS DataFrame
 report_df_ALOS_by_ward = report_df_pt_days_by_ward / report_df_disch_by_ward
@@ -324,40 +358,72 @@ report_df_ALOS_by_ward = report_df_ALOS_by_ward.round(decimals=1)
 report_df_ALOS_by_dept_cls = report_df_ALOS_by_dept_cls.round(decimals=1)
 report_df_ALOS_by_dept = report_df_ALOS_by_dept.round(decimals=1)
 
+# start of report writer
+writer = pd.ExcelWriter(PT.path_report_output + 'Inpt_rpt(' + Report_start_last_mth + ').xlsx', engine='xlsxwriter')
+
+report_df_adm_by_ward.to_excel(writer, sheet_name='adm_by_ward')
+report_df_adm_by_paying.to_excel(writer, sheet_name='adm_by_paying')
+report_df_ALOS_by_ward.to_excel(writer, sheet_name='ALOS_by_ward', float_format="%0.2f")
+report_df_BOR_by_ward.to_excel(writer, sheet_name='BOR_by_ward', float_format="%0.2f")
+report_df_disch_by_ward.to_excel(writer, sheet_name='disch_by_ward')
+report_df_pt_days_by_ward.to_excel(writer, sheet_name='pt_days_by_ward')
+report_df_pt_days_acuity.to_excel(writer, sheet_name='pt_days_by_acuity')
+report_df_daily_disch.to_excel(writer, sheet_name='daily_disch')
+report_df_daily_pt_days.to_excel(writer, sheet_name='daily_pt_days')
+report_df_disch_type.to_excel(writer, sheet_name='disch_by_DischType')
+report_df_disch_w_24h.to_excel(writer, sheet_name='disch_w_24h')
+report_df_bis_by_ward.to_excel(writer, sheet_name='Bed_days_by_ward')
+report_df_bis_by_class.to_excel(writer, sheet_name='Bed_days_by_class')
+report_df_bis_by_ward_avg.to_excel(writer, sheet_name='BIS_by_ward')
+report_df_bis_by_class_avg.to_excel(writer, sheet_name='BIS_by_class')
+report_df_F09_adm.to_excel(writer, sheet_name='MOH_F09_Adm')
+report_df_F09_disch.to_excel(writer, sheet_name='MOH_F09_Disch')
+report_df_F09_disch_death.to_excel(writer, sheet_name='MOH_F09_death')
+report_df_F10_pt_days.to_excel(writer, sheet_name='MOH_F10_ptdays')
+report_df_lodger_adm.to_excel(writer, sheet_name='MOH_F03_Lodger')
+report_df_lodger_pt_days.to_excel(writer, sheet_name='MOH_F03a_Lodger')
+report_df_fin_disch_abc.to_excel(writer, sheet_name='Fin_disch_abc')
+report_df_fin_disch_dept.to_excel(writer, sheet_name='Fin_disch_dept')
+report_df_fin_disch_ref_type.to_excel(writer, sheet_name='Fin_disch_ref_type')
+report_df_fin_disch_w_iso_HD.to_excel(writer, sheet_name='Fin_disch_iso_icu')
+report_df_fin_pt_days_abc.to_excel(writer, sheet_name='Fin_pt_days_abc')
+report_df_fin_pt_days_dept.to_excel(writer, sheet_name='Fin_pt_days_dept')
+report_df_fin_pt_days_w_iso_HD.to_excel(writer, sheet_name='Fin_pt_days_dept_ICU_ISO')
+report_df_ALOS_by_dept.to_excel(writer, sheet_name='ALOS_by_dept', float_format="%0.2f")
+report_df_ALOS_by_dept_cls.to_excel(writer, sheet_name='ALOS_by_dept&cls', float_format="%0.2f")
+
+writer.save()
+print("Reports exported, running formatting procedure")
 # Open a template file with Xlwings
-wb = xw.Book(PT.path_report_output + 'Inpt_rpt_template1.0.xlsx')
+# Open HIM Monthly Template
+app = xw.App(visible=False)
+template = xw.Book(PT.path_lookup + 'Inpt_rpt_format_template.xlsm')
+report = xw.Book(PT.path_report_output + 'Inpt_rpt(' + Report_start_last_mth + ').xlsx')
+VBA_to_format = xw.Book(PT.path_lookup + 'VBA_format_inpt.xlsm')
+formatReport = VBA_to_format.macro('FormatReport')
+formatReport_s = VBA_to_format.macro('FormatReport_single')
 
-# write dataframe into the template
-Report_start = lastYear.replace(day=1).strftime("%b-%Y")
-wb.sheets[0]['A2'].value = "REPORTING PERIOD FROM "+Report_start+' ONWARDS'
-wb.sheets[1]['A4'].value = report_df_adm_by_ward
-wb.sheets[2]['A4'].value = report_df_disch_by_ward
-wb.sheets[3]['A4'].value = report_df_pt_days_by_ward
-wb.sheets[4]['A4'].value = report_df_ALOS_by_ward
-wb.sheets[5]['A4'].value = report_df_pt_days_acuity
-wb.sheets[6]['A4'].value = report_df_disch_type
-wb.sheets[7]['A4'].value = report_df_disch_w_24h
-wb.sheets[8]['A4'].value = report_df_daily_disch
-wb.sheets[9]['A4'].value = report_df_daily_pt_days
-wb.sheets[10]['A4'].value = report_df_bis_by_ward
-wb.sheets[11]['A4'].value = report_df_bis_by_class
-wb.sheets[12]['A4'].value = report_df_F09_adm
-wb.sheets[13]['A4'].value = report_df_F09_disch
-wb.sheets[14]['A4'].value = report_df_F09_disch_death
-wb.sheets[15]['A4'].value = report_df_F10_pt_days
-wb.sheets[16]['A4'].value = report_df_lodger_adm
-wb.sheets[17]['A4'].value = report_df_lodger_pt_days
-wb.sheets[18]['A4'].value = report_df_fin_disch_abc
-wb.sheets[19]['A4'].value = report_df_fin_disch_w_iso_HD
-wb.sheets[20]['A4'].value = report_df_fin_disch_dept
-wb.sheets[21]['A4'].value = report_df_fin_disch_ref_type
-wb.sheets[22]['A4'].value = report_df_fin_pt_days_abc
-wb.sheets[23]['A4'].value = report_df_fin_pt_days_w_iso_HD
-wb.sheets[24]['A4'].value = report_df_fin_pt_days_dept
-wb.sheets[25]['A4'].value = report_df_ALOS_by_dept_cls
-wb.sheets[26]['A4'].value = report_df_ALOS_by_dept
+Report_start = lastYear.replace(day=1).strftime("%b-%Y").upper()
+Report_end = lastMonth.replace(day=1).strftime("%b-%Y").upper()
+template.sheets[0]['A2'].value = "REPORTING PERIOD FROM " + Report_start + ' TO ' + Report_end
+# Format report using excel macro
+for i in range(len(report.sheets)):
+    if i < 21:
+        formatReport_s(report.sheets[i])
+    else:
+        formatReport(report.sheets[i])
+    report.sheets[i]['A1:AG100'].copy()
+    template.sheets[i + 1]['A4'].paste()
+    report.sheets[i]['Z2000'].copy()
+    template.sheets[i + 1]['A3'].paste()
 
-# Save under a new file name
-wb.save(PT.path_report_output + 'new_inpt_rpt('+Report_start_last_mth+').xlsx')
+template.sheets[0].activate()
+
+# Save file
+template.save(PT.path_report_output + 'Inpt_rpt(' + Report_start_last_mth + ')formatted.xlsx')
+template.close()
+report.close()
+VBA_to_format.close()
+app.quit()
 
 print("All reports successfully Generated")
