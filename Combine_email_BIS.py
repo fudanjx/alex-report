@@ -5,17 +5,18 @@ import win32com
 from win32com.client import Dispatch
 import os
 
-folder_path = PT.path_Email_data
+# source_folder_path = PT.path_Email_data
+source_folder_path = 'D:/email_test/'
+destination_path = PT.path_wip_output + 'BMU_email2020.csv'
 
 # remove all the while space in the source email file names
-folder_path = PT.path_Email_data
-[os.rename(os.path.join(folder_path, f), os.path.join(folder_path, f).replace(' ', '_').lower()) for f in
- os.listdir(folder_path)]
+[os.rename(os.path.join(source_folder_path, f), os.path.join(source_folder_path, f).replace(' ', '_').lower()) for f in
+ os.listdir(source_folder_path)]
 
 # define the keyword list help to locate the key words within the email body
 keywords = ["Ward 2", 'C - Emerald Unit', 'Ward 3', 'Ward 4', 'Ward 5', 'Ward 7', 'B1', 'Ward 12', 'Ward 13', 'Ward 8',
             'COVID-19 ISO', 'Ward 9', 'Ward 8', 'ICU1', 'Classless']
-cls_list = ['A1', 'B1', 'B2', 'C', 'ISO', 'ICU']
+cls_list = ['A1', 'B1', 'B2', 'C', 'ISO', 'ICU', 'Classless']
 ward_key_word = ['Ward', 'ICU1', 'ICU2']
 temp_ward = 'Ward2'
 
@@ -43,7 +44,7 @@ def check_repeat_email(mail_date, history_date_list):
 outlook = win32com.client.Dispatch('Outlook.Application').GetNamespace('MAPI')
 
 # Initialise & populate list of emails
-email_list = [file for file in os.listdir(folder_path) if file.endswith(".msg")]
+email_list = [file for file in os.listdir(source_folder_path) if file.endswith(".msg")]
 
 # define a DataFrame to store the information from each day each row extraction
 df_delta = pd.DataFrame(columns=["Msg_Date", "Ward", "Class", "BIS", "Inflight", "BOR", "rep_index"])
@@ -52,10 +53,10 @@ df_delta = pd.DataFrame(columns=["Msg_Date", "Ward", "Class", "BIS", "Inflight",
 # since each day has two or more messages, the 1st import rep_index will set as 0, 2nd import will set as 1
 mail_date_list = []
 history_date_list1 = []
-# keep the existing data message data into the list, to allow later check for existence of existing record
+# keep the existing message data into the list, to allow later check for existence of existing record
 try:
     col_list = ["Msg_Date"]
-    df_record_date_check = pd.read_csv(PT.path_wip_output + 'BMU_email.csv', usecols=col_list)
+    df_record_date_check = pd.read_csv(destination_path, usecols=col_list)
     history_date_list = df_record_date_check.Msg_Date.tolist()
     history_date_list = list(set(history_date_list))
 except:
@@ -63,7 +64,7 @@ except:
 
 # Iterate through every email
 for i, _ in enumerate(email_list):
-    msg = outlook.OpenSharedItem(os.path.join(folder_path, email_list[i]))
+    msg = outlook.OpenSharedItem(os.path.join(source_folder_path, email_list[i]))
     # the email has been imported as a very long string
     mail = msg.Body
     mail_date = msg.SentOn
@@ -147,10 +148,10 @@ df_delta['Day'] = pd.to_datetime(df_delta.Msg_Date).dt.day
 
 print(len(df_delta), " new records are found, and append to the existing database")
 try:
-    df_origin = pd.read_csv(PT.path_wip_output + 'BMU_email.csv')
+    df_origin = pd.read_csv(destination_path)
 except:
     df_origin = pd.DataFrame(
         columns=["Msg_Date", "Ward", "Class", "BIS", "Inflight", "BOR", "rep_index", "Hour", "Year", "Month", "Day",
                  ])
 df_delta = pd.concat([df_origin, df_delta], axis=0)
-df_delta.to_csv(PT.path_wip_output + 'BMU_email.csv', index=False)
+df_delta.to_csv(destination_path, index=False)
