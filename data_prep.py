@@ -16,7 +16,7 @@ def clean_raw_extraction(source_path, filename, wip_path, lookup_path):
     # read raw download file with 'skiprows' based on idx value obtained
 
     df = pd.read_csv(source_path + filename, sep='\t',
-                     skiprows=idx[0]+1, skipfooter=1, skip_blank_lines=True,
+                     skiprows=idx[0] + 1, skipfooter=1, skip_blank_lines=True,
                      engine='python')
     # find all the "unnamed" column which are empty column, and remove them
     cols = [item for item in df.columns if item.lower()[:7] != 'unnamed']
@@ -134,6 +134,24 @@ def pt_cls_icu_iso_for_disch(pt_class, iso_ward, trt_cat):
     else:
         pt_class = pt_class
     return pt_class
+
+
+def pt_cls_sub_paying(pt_class):
+    if pt_class == 'B2':
+        paying_Status = "Sub"
+        return paying_Status
+    if pt_class == 'B2P':
+        paying_Status = "Sub"
+        return paying_Status
+    if pt_class == 'C':
+        paying_Status = "Sub"
+        return paying_Status
+    if pt_class == 'CP':
+        paying_Status = "Sub"
+        return paying_Status
+    else:
+        paying_Status = "Paying"
+        return paying_Status
 
 
 def replace_with_current_ward(adm_ward, current_ward):
