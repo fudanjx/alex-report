@@ -16,7 +16,7 @@ def check_case_in_disch(pt_nric, date_of_SOC_visit, df_disch):
     try:
         closest_value = min(list_of_disch_date, key=diff_func)
         delta_duration = date_of_SOC_visit - closest_value
-        if delta_duration < datetime.timedelta(days=180):
+        if delta_duration < datetime.timedelta(days=120):
             return True
         else:
             return False
