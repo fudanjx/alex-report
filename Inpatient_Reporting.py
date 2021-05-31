@@ -1,3 +1,4 @@
+from timeit import timeit
 import pandas as pd
 import numpy as np
 import datetime
@@ -327,22 +328,21 @@ report_df_bis_by_ward_avg = pd.pivot_table(df_bis_for_report, values='BIS', inde
                                            aggfunc=np.sum).round(decimals=0)
 
 # Gives number of days in the month and divides each column by those days
-for i in range(len(report_df_bis_by_ward_avg.columns)):
-    report_df_bis_by_ward_avg[report_df_bis_by_ward_avg.columns[i]] = report_df_bis_by_ward_avg[
-                                                                          report_df_bis_by_ward_avg.columns[i]] / \
-                                                                      monthrange(
-                                                                          report_df_bis_by_ward_avg.columns[i][0],
-                                                                          report_df_bis_by_ward_avg.columns[i][1])[1]
+for i in report_df_bis_by_class_avg.columns:
+    report_df_bis_by_class_avg[i] = report_df_bis_by_class_avg[i] / monthrange(i[0], i[1])[1]
 
-for i in range(len(report_df_bis_by_class_avg.columns)):
-    report_df_bis_by_class_avg[report_df_bis_by_class_avg.columns[i]] = report_df_bis_by_class_avg[
-                                                                            report_df_bis_by_class_avg.columns[i]] / \
-                                                                        monthrange(
-                                                                            report_df_bis_by_class_avg.columns[i][0],
-                                                                            report_df_bis_by_class_avg.columns[i][1])[1]
+for i in report_df_bis_by_ward_avg.columns:
+    report_df_bis_by_ward_avg[i] = report_df_bis_by_ward_avg[i] / monthrange(i[0], i[1])[1]
 
 report_df_bis_by_ward_avg = np.round(report_df_bis_by_ward_avg, 0)
 report_df_bis_by_class_avg = np.round(report_df_bis_by_class_avg, 0)
+
+# adding sum rows at the end of the table
+report_df_bis_by_ward_avg.loc[len(report_df_bis_by_ward_avg)] = report_df_bis_by_ward_avg.apply(np.sum).to_list()
+report_df_bis_by_ward_avg = report_df_bis_by_ward_avg.rename(index={len(report_df_bis_by_ward_avg)-1: 'TOTAL'})
+
+report_df_bis_by_class_avg.loc[len(report_df_bis_by_class_avg)] = report_df_bis_by_class_avg.apply(np.sum).to_list()
+report_df_bis_by_class_avg = report_df_bis_by_class_avg.rename(index={len(report_df_bis_by_class_avg)-1: 'TOTAL'})
 
 print('Processing BIS information ....... done  ')
 
@@ -393,7 +393,7 @@ report_df_ALOS_by_dept.to_excel(writer, sheet_name='ALOS_by_dept', float_format=
 report_df_ALOS_by_dept_cls.to_excel(writer, sheet_name='ALOS_by_dept&cls', float_format="%0.2f")
 
 writer.save()
-print("Reports exported, running formatting procedure")
+print("Reports exported, running formatting procedure ... ")
 # Open a template file with Xlwings
 # Open HIM Monthly Template
 app = xw.App(visible=False)
