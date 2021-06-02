@@ -5,9 +5,9 @@ import win32com
 from win32com.client import Dispatch
 import os
 
-# source_folder_path = PT.path_Email_data
-source_folder_path = 'D:/email_test/'
-destination_path = PT.path_wip_output + 'BMU_email2020.csv'
+source_folder_path = PT.path_Email_data
+# source_folder_path = 'D:/email_test/'
+destination_path = PT.path_wip_output + 'BMU_email.csv'
 
 # remove all the while space in the source email file names
 [os.rename(os.path.join(source_folder_path, f), os.path.join(source_folder_path, f).replace(' ', '_').lower()) for f in
@@ -16,7 +16,7 @@ destination_path = PT.path_wip_output + 'BMU_email2020.csv'
 # define the keyword list help to locate the key words within the email body
 keywords = ["Ward 2", 'C - Emerald Unit', 'Ward 3', 'Ward 4', 'Ward 5', 'Ward 7', 'B1', 'Ward 12', 'Ward 13', 'Ward 8',
             'COVID-19 ISO', 'Ward 9', 'Ward 8', 'ICU1', 'Classless']
-cls_list = ['A1', 'B1', 'B2', 'C', 'ISO', 'ICU', 'Classless']
+cls_list = ['A1', 'B1', 'B2', 'C', 'ISO', 'ICU', 'Classless', 'ICU / HD']
 ward_key_word = ['Ward', 'ICU1', 'ICU2']
 temp_ward = 'Ward2'
 
@@ -57,6 +57,7 @@ history_date_list1 = []
 try:
     col_list = ["Msg_Date"]
     df_record_date_check = pd.read_csv(destination_path, usecols=col_list)
+    print(df_record_date_check.dtypes)
     history_date_list = df_record_date_check.Msg_Date.tolist()
     history_date_list = list(set(history_date_list))
 except:
@@ -119,7 +120,7 @@ for i, _ in enumerate(email_list):
         try:
             bis_inflight_BOR.insert(0, cls[0])
             bis_inflight_BOR.insert(0, ward)
-            bis_inflight_BOR.insert(0, mail_date.date())
+            bis_inflight_BOR.insert(0, str(mail_date.date()))
             bis_inflight_BOR.append(mail_repeat_index)
         except:
             pass
