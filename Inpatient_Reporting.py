@@ -23,9 +23,9 @@ print("first date of last month: ", first_lastMonth)
 print("first date of 12 month ago: ", first_lastyear)
 
 # read source data, and add year month label
-df_dc = pd.read_parquet(PT.path_wip_output + 'Combined_discharge.parquet')
-df_inflight = pd.read_parquet(PT.path_wip_output + 'Combined_inflight.parquet')
-df_adm = pd.read_parquet(PT.path_wip_output + 'Combined_admission.parquet')
+df_dc = pd.read_parquet(PT.path_wip_output + 'Combined_disch.parquet.gzip')
+df_inflight = pd.read_parquet(PT.path_wip_output + 'Combined_inflight.parquet.gzip')
+df_adm = pd.read_parquet(PT.path_wip_output + 'Combined_adm.parquet.gzip')
 # setup moh speciality list df, prepare for later MOH report merging
 df_moh_speciality = pd.read_excel(PT.path_lookup + 'Class.xlsx', sheet_name="MOH_Speciality",
                                   index_col='Moh_Clinical_Dept')
@@ -117,7 +117,7 @@ dc_to_inflight['Attend_Phy'] = same_day_dc_df['Disch_Phy']
 dc_to_inflight['Accom_Category'] = same_day_dc_df['Adm_Acmd_Cat']
 
 print("inflight: ", df_inflight.shape)
-dc_to_inflight.to_csv(PT.path_wip_output + 'dc_sameday_inpatient.csv', index=0)
+# dc_to_inflight.to_csv(PT.path_wip_output + 'dc_sameday_inpatient.csv', index=0)
 print("dc_same_day: ", dc_to_inflight.shape)
 
 # concatenate both dataframe
@@ -138,7 +138,7 @@ df_inflight_final['Class_icu_iso_MOH'] = df_inflight_final.apply(
 
 df_inflight_final = df_inflight_final[(df_inflight_final['Ward'] != 'LWEDTU') & (df_inflight_final['Ward'] != 'LWASW')]
 
-df_inflight_final.to_csv(PT.path_wip_output + 'final_inflight.csv', index=0)
+# df_inflight_final.to_csv(PT.path_wip_output + 'final_inflight.csv', index=0)
 print("Merge same day discharge with inflight data to calculate the patient days .... done")
 print("After removing EDTU/ASW, new dataframe size: ", df_inflight_final.shape)
 
@@ -177,7 +177,7 @@ df_adm['Class_with_icu_iso'] = df_adm.apply(
     lambda x: prep.pt_class_with_icu_iso(x['Wish_Cls'], x['Adm_Acmd_Cat'], x['Adm_Trt_Cat']), axis=1)
 df_adm = df_adm.loc[df_adm['Adm_Ward'].str.contains('LWEDTU|LWASW|LWDSW', regex=True) == False]
 df_adm.rename(columns={"Moh_Clinical_Dept(Adm)": 'Moh_Clinical_Dept'}, inplace=True)
-df_adm.to_csv(PT.path_wip_output + 'temp_adm.csv', index=0)
+# df_adm.to_csv(PT.path_wip_output + 'temp_adm.csv', index=0)
 
 # Generate F09 admission section
 
@@ -195,7 +195,7 @@ df_adm_lodger = df_adm_lodger[df_adm_lodger['Adm_Acmd_Cat'].notna()]
 
 df_adm_lodger = df_adm_lodger.loc[df_adm_lodger['Adm_Acmd_Cat'].str.contains('A1|B1|B2', regex=True)]
 df_adm_lodger = df_adm_lodger.loc[df_adm_lodger['Adm_Acmd_Cat'] != df_adm_lodger['Wish_Cls']]
-df_adm_lodger.to_csv(PT.path_wip_output + 'temp_adm_lodger.csv', index=0)
+# df_adm_lodger.to_csv(PT.path_wip_output + 'temp_adm_lodger.csv', index=0)
 df_adm_lodger['Moh_Clinical_Dept'] = df_adm_lodger['Moh_Clinical_Dept'].fillna(
     df_adm_lodger['Moh_Clinical_Dept(Disch)'])
 # df_adm_lodger = df_adm_lodger.loc[df_adm_lodger['Adm_Date'] >= first_lastyear]
@@ -222,7 +222,7 @@ df_dc = df_dc.loc[df_dc['Nrs_OU'].str.contains('LWEDTU|LWASW|LWDSW', regex=True)
 df_dc['cls_icu_iso'] = df_dc.apply(
     lambda x: prep.pt_cls_icu_iso_for_disch(x['Class_abc'], x['Nrs_OU'], x['Trt_Cat']), axis=1)
 df_dc['death'] = df_dc.apply(lambda x: prep.death_indicator(x['Discharge_Type_Text']), axis=1)
-df_dc.to_csv(PT.path_wip_output + 'temp_disch.csv', index=0)
+# df_dc.to_csv(PT.path_wip_output + 'temp_disch.csv', index=0)
 print('Applied the necessary filter procedure to discharge data ....... done  ')
 
 report_df_disch_by_ward = pd.pivot_table(df_dc, values='cnt', index=['Nrs_OU'], columns=['Year', 'Month'],
