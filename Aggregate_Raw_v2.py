@@ -8,7 +8,7 @@ import locale
 locale.setlocale(locale.LC_TIME, "en_SG")  # singapore
 
 # to indicate whether want to save output as csv, along with the default parquet output.
-# no CSV output while equal to 0.
+# no CSV output while equal to 0. other value will result in csv output
 require_csv = 0
 
 # Step 1 -  combine inflight data
