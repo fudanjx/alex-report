@@ -256,6 +256,7 @@ list_file_log = df_file_log['File'].tolist()
 try:
     df_SOC = pd.read_parquet(PT.path_wip_output + filename_db)
     df_SOC = df_SOC.loc[df_SOC['prelim_flag'] != 'Y']
+    df_SOC = df_SOC.loc[df_SOC['Status'] != 'P']
     df_SOC.drop_duplicates(inplace=True)
 except:
     df_SOC = pd.DataFrame()
